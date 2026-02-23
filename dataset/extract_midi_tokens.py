@@ -68,14 +68,16 @@ def process_midi_to_tokens(
     for inst in midi_data.instruments:
         is_drum = inst.is_drum
         for note in inst.notes:
-            # Convert time (seconds) to frame index
-            frame_idx = int(note.start * fps)
+            # Convert time (seconds) to frame indices
+            start_frame = int(note.start * fps)
+            end_frame = int(round(note.end * fps))
             
-            frame_dict[frame_idx].append({
-                'pitch': note.pitch,
-                'is_drum': is_drum
-            })
-            max_frame = max(max_frame, frame_idx)
+            for frame_idx in range(start_frame, end_frame):
+                frame_dict[frame_idx].append({
+                    'pitch': note.pitch,
+                    'is_drum': is_drum
+                })
+                max_frame = max(max_frame, frame_idx)
     
     # Get PAD token ID from tokenizer
     PAD_TOKEN_ID = tokenizer.pad_id
@@ -92,7 +94,7 @@ def process_midi_to_tokens(
     # Convert each frame's events to tokens
     for frame_idx, events in frame_dict.items():
         if frame_idx >= total_frames:
-            break
+            continue
             
         # Sort events: non-drum first, then by pitch (ascending)
         sorted_events = sorted(events, key=lambda x: (x['is_drum'], x['pitch']))
