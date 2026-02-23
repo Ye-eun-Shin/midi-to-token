@@ -132,9 +132,12 @@ Each token file (`.pt`) contains a PyTorch tensor of shape `[time_steps, num_hea
 - **num_heads**: Number of concurrent note events (default: 4)
 
 Each token represents a MIDI note event encoded using the YourMT3 codec:
-- Pitch events: Non-drum notes
-- Drum events: Drum/percussion notes
+- Pitch events: Non-drum notes (sustained throughout note duration)
+- Drum events: Drum/percussion notes (sustained throughout note duration)
 - PAD tokens: No event at this position
+
+**Note Duration Handling:**
+When a MIDI note plays from onset to offset (e.g., a piano note held for 1 second), the corresponding pitch token is repeated across all frames during that duration. For example, a 1-second note at 50 FPS will have the same pitch token for 50 consecutive frames.
 
 ## Comparison with Audio Pipeline
 
@@ -167,5 +170,7 @@ The YourMT3 tokenizer modules must be available:
 - The default FPS is 50 (20ms resolution), matching common music transcription models
 - Each frame can contain up to 4 concurrent note events (configurable)
 - Events within a frame are sorted: non-drum notes first, then by pitch (ascending)
+- Each note's pitch token is repeated across all frames from onset to offset (sustained representation)
+- Frame calculations: start_frame = int(note.start * fps), end_frame = int(round(note.end * fps))
 - Excess events beyond `num_heads` are truncated
 - The tokenizer uses the MT3 codec by default
